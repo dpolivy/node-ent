@@ -42,7 +42,7 @@ test('hex', function (t) {
         }
     }
 
-    for (var i = 127; i < 2000; i++) {
+    for (var i = 128; i < 2000; i++) {
         var a = String.fromCharCode(i);
         var b = '&#x' + i.toString(16) + ';';
         var c = '&#X' + i.toString(16) + ';';
@@ -68,7 +68,7 @@ test('decimal encoding', function (t) {
 
         // Decode into the Unicode character
         var decoded = ent.decode(a);
-        t.equal(decoded, (typeof e == 'number') ? String.fromCharCode(e) : e);
+        t.equal(decoded, (typeof e === 'number') ? String.fromCharCode(e) : e);
 
         // Encode it as a decimal entity
         var encodedDec = ent.encode(decoded, { decimalOnly: true });
@@ -92,6 +92,42 @@ test('double encoding', function(t) {
 
     t.equal(ent.encode(a), '&amp;3509;&amp;3510;');
     t.equal(ent.encode(a, { decimalOnly: true }), '&amp;3509;&amp;3510;');
+
+    t.end();
+});
+
+
+test('non-ascii encoding', function (t) {
+    for (var key in entities) {
+        var e = entities[key],
+            a = '&' + key + ';';
+
+            // Decode the named entity into the Unicode character
+        var decoded = ent.decodeForDb(a),
+            // We expect to have characters for all codes < 256 and for mappings that are strings
+            decodedExpected = (typeof e === 'number') && e < 256 ?
+                String.fromCharCode(e) :
+                (typeof e === 'string') ? e : a;
+
+        // Make sure the decoded values match
+        t.equal(decoded, decodedExpected);
+
+        // Encode it for the DB using the fully decoded source character
+        var encodedDb = ent.encodeForDb(ent.decode(a));
+
+        // Make sure the entity is properly encoded if above code 255
+        if (typeof e == 'number' && e > 255) {
+            t.equal(encodedDb, '&#' + e + ';');
+        }
+        else {
+            t.equal(encodedDb, decodedExpected);
+        }
+
+        var decodedExpectedNumeric = (typeof e === 'number') && e < 256 ?
+                String.fromCharCode(e) :
+                (typeof e === 'string') ? e : '&#' + e + ';';
+        t.equal(ent.decodeForDb(encodedDb), decodedExpectedNumeric);
+    }
 
     t.end();
 });
