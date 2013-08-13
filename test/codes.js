@@ -1,6 +1,7 @@
 var test = require('tape');
 var punycode = require('punycode');
 var ent = require('../');
+var entities = require('../entities.json');
 var revEntities = require('../reversed.json');
 
 test('amp', function (t) {
@@ -113,6 +114,46 @@ test('double encoding', function(t) {
 
     t.equal(ent.encode(a), b);
     t.equal(ent.encode(a, { useNamedReferences: false }), b);
+
+    t.end();
+});
+
+test('non-ascii encoding', function (t) {
+    for (var key in entities) {
+        var e = entities[key],
+            cc = e.charCodeAt(0),
+            a = '&' + key;
+
+        // Eliminate double character entities from this test for now
+        if (e.length !== 1 || !/\;$/.test(key)) continue;
+
+            // Decode the named entity into the Unicode character
+        var decoded = ent.decodeForDb(a),
+            // We expect to have characters for all codes < 256 and for mappings that are strings
+            decodedExpected = (cc <= 256) ? String.fromCharCode(cc) : a,
+            encodedExpected = (cc <= 256 && [34,38,39,60,62].indexOf(cc) === -1) ?
+                String.fromCharCode(cc) :
+                a.toLowerCase();
+
+        // Make sure the decoded values match
+        t.equal(decoded, decodedExpected);
+
+        // Encode it for the DB using the fully decoded source character
+        var encodedDb = ent.encodeForDb(ent.decode(a));
+
+        // Make sure the entity is properly encoded if above code 255
+        if (cc > 255) {
+            t.equal(encodedDb, '&#' + cc + ';');
+        }
+        else {
+            t.equal(encodedDb, encodedExpected);
+        }
+
+        var decodedExpectedNumeric = cc < 256 ?
+                String.fromCharCode(cc) :
+                '&#' + cc + ';';
+        t.equal(ent.decodeForDb(encodedDb), decodedExpectedNumeric);
+    }
 
     t.end();
 });
