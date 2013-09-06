@@ -157,3 +157,15 @@ test('non-ascii encoding', function (t) {
 
     t.end();
 });
+
+test('extended character only encoding', function (t) {
+    var htmlChars = ['<','>','\'','"','&'];
+
+    htmlChars.forEach(function(val) {
+        var encode = ent.encodeExtendedOnlyForDb(val);
+
+        t.equal(encode, val);
+    });
+
+    t.end();
+});

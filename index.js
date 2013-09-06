@@ -37,7 +37,7 @@ exports.encode = function (str, options) {
 
     return str.split('').map(function (c) {
         var cc = c.charCodeAt(0);
-        var e = getNamedEntity(cc, useNamedReferences);
+        var e = (!opts.excludeHtmlSpecialCharacters) ? getNamedEntity(cc, useNamedReferences) : undefined;
         if (e) {
             return '&' + (e.match(/;$/) ? e : e + ';');
         }
@@ -55,6 +55,10 @@ exports.encode = function (str, options) {
 
 exports.encodeForDb = function (str) {
     return exports.encode(str, { asciiOnly: true, useNamedReferences: false });
+}
+
+exports.encodeExtendedOnlyForDb = function (str) {
+    return exports.encode(str, { asciiOnly: true, excludeHtmlSpecialCharacters: true });
 }
 
 exports.decode = function (str, options) {
