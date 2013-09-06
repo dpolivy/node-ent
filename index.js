@@ -11,8 +11,11 @@ var alwaysEscape = {
     '62': 'gt'
 };
 
-var getNamedEntity = function (code, useNamedReferences) {
-    var e = alwaysEscape[code];
+// Only encode the following for ASP Compat mode
+var aspCompatCodes = [34, 38, 60, 62];
+
+var getNamedEntity = function (code, useNamedReferences, aspCompat) {
+    var e = !aspCompat || aspCompat && aspCompatCodes.indexOf(code) !== -1 ? alwaysEscape[code] : undefined;
 
     // Only use named references for non-ASCII characters
     if (!e && useNamedReferences && /[^\x20-\x7F]/.test(punycode.ucs2.encode([code]))) {
@@ -37,7 +40,7 @@ exports.encode = function (str, options) {
 
     return str.split('').map(function (c) {
         var cc = c.charCodeAt(0);
-        var e = (!opts.excludeHtmlSpecialCharacters) ? getNamedEntity(cc, useNamedReferences) : undefined;
+        var e = (!opts.excludeHtmlSpecialCharacters) ? getNamedEntity(cc, useNamedReferences, opts.aspCompat) : undefined;
         if (e) {
             return '&' + (e.match(/;$/) ? e : e + ';');
         }

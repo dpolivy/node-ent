@@ -158,6 +158,24 @@ test('non-ascii encoding', function (t) {
     t.end();
 });
 
+test('aspCompat testing', function (t) {
+    var htmlChars = {
+        '<': '&lt;',
+        '>': '&gt;',
+        '\'': '\'',
+        '"': '&quot;',
+        '&': '&amp;'
+    };
+
+    for (var key in htmlChars) {
+        var encode = ent.encode(key, { aspCompat : true });
+
+        t.equal(encode, htmlChars[key]);
+    }
+
+    t.end();
+});
+
 test('extended character only encoding', function (t) {
     var htmlChars = ['<','>','\'','"','&'];
 
